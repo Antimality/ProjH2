@@ -16,7 +16,7 @@ def read_input(args: list) -> (dict[int, list[float]], int, int, float):
     # Read K
     # TODO: Does something like k=42.0 fine?
     if not str.isdecimal(args[0]):
-        print("Incorrect number of clusters!")
+        print("Invalid number of clusters!")
         exit(1)
     k = int(args[0])
 
@@ -24,25 +24,19 @@ def read_input(args: list) -> (dict[int, list[float]], int, int, float):
     max_iter = DEFAULT_ITER
     if n == 5:
         if not str.isdecimal(args[1]):
-            print("Incorrect maximum iteration!")
+            print("Invalid maximum iteration!")
             exit(1)
         max_iter = int(args[1])
         if not (max_iter > 1 and max_iter < 1000):
-            print("Incorrect maximum iteration!")
+            print("Invalid maximum iteration!")
             exit(1)
 
     # Read eps
-    # TODO: Handle float
-    # try:
-    #     eps = float(args[2 + offset])
-    # except:
-    #     print("Invalid epsilon!")
-    #     exit(1)
-    # if not str.isnumeric(args[2 + offset]):
-    #     print("Invalid epsilon!")
-    #     exit(1)
-    eps = float(args[2 + offset])
-    if eps < 0:
+    try:
+        eps = float(args[2 + offset])
+        if eps < 0:
+            raise ValueError
+    except ValueError:
         print("Invalid epsilon!")
         exit(1)
 
@@ -62,7 +56,7 @@ def read_input(args: list) -> (dict[int, list[float]], int, int, float):
 
     # Make sure K < N
     if not (k > 1 and k < len(points_dict.keys())):
-        print("Incorrect number of clusters!")
+        print("Invalid number of clusters!")
         exit(1)
 
     return points_dict, k, max_iter, eps
