@@ -1,6 +1,6 @@
 import sys
-from math import sqrt
 import csv
+import numpy as np
 
 # Consts
 DEFAULT_ITER = 300
@@ -66,16 +66,41 @@ def kmeanspp(
     points_dict: dict[int, list[tuple]], k: int
 ) -> (list[tuple], list[tuple], list[int]):
     points = dict_to_list(points_dict)
+    n = len(points)
 
-    # TODO: Implement kmeans++
-    # YANAI: You don't have to keep the meaningless key, I find the "observation index" using reverse lookup below
-    init_centroids = points[:k]
+    # kmeans++
+    np.random.seed(1234)
+    init_centroids = [points[np.random.choice(n)]]
+    for j in range(1, k):
+        distances = [nearest_distance(point, init_centroids) for point in points]
+        sum = np.sum(distances)
+        probs = np.array(distances) / sum
+        init_centroids.append(points[np.random.choice(n, p=probs)])
 
     return points, init_centroids, get_keys(points_dict, init_centroids)
 
 
+def nearest_distance(point: tuple, centroids: list[tuple]) -> float:
+    min_dist = float("inf")
+    for centroid in centroids:
+        dist = euclidean_distance(point, centroid)
+        min_dist = np.min((min_dist, dist))
+    return min_dist
+
+
+def euclidean_distance(point1: tuple, point2: tuple) -> float:
+    # Check dimentional consistancy
+    if not len(point1) == len(point2):
+        print("An Error Has Occurred")
+        exit(1)
+    distance = 0
+    for i in range(len(point1)):
+        distance += (point1[i] - point2[i]) ** 2
+    return np.sqrt(distance)
+
+
 def dict_to_list(points_dict: dict[int, list[tuple]]) -> list[tuple]:
-    return [tuple(point) for point in points_dict.values()]
+    return [tuple(point[1]) for point in sorted(points_dict.items())]
 
 
 def get_keys(points_dict: dict[int, list[tuple]], points: list[tuple]) -> list[int]:
@@ -83,6 +108,14 @@ def get_keys(points_dict: dict[int, list[tuple]], points: list[tuple]) -> list[i
     return [point_to_key[point] for point in points]
 
 
+def kmeans(
+    points: list[tuple], init_centroids: list[tuple], k: int, max_iter: int, eps: float
+) -> list[tuple]:
+    # TODO: Implement kmeans with C
+    return generate_clusters(points, init_centroids, k, max_iter, eps)
+
+
+### SHOULD BE REMOVED
 def generate_clusters(
     points: list[tuple], init_centroids: list[tuple], k: int, max_iter: int, eps: float
 ) -> list[tuple]:
@@ -120,17 +153,6 @@ def generate_clusters(
     return centroids
 
 
-def euclidean_distance(tup1: tuple, tup2: tuple) -> float:
-    # Check dimentional consistancy
-    if not len(tup1) == len(tup2):
-        print("An Error Has Occurred")
-        exit(1)
-    distance = 0
-    for i in range(len(tup1)):
-        distance += (tup1[i] - tup2[i]) ** 2
-    return sqrt(distance)
-
-
 def average_point(lst: list[tuple], sub_lst: list[tuple]) -> tuple[float]:
     dim = len(lst[0])
     n = len(sub_lst)
@@ -156,5 +178,5 @@ def print_result(indices: list[int], centroids: list[tuple]):
 if __name__ == "__main__":
     points_dict, k, max_iter, eps = read_input(sys.argv[1:])
     points, init_centroids, indices = kmeanspp(points_dict, k)
-    centroids = generate_clusters(points, init_centroids, k, max_iter, eps)
+    centroids = kmeans(points, init_centroids, k, max_iter, eps)
     print_result(indices, centroids)
