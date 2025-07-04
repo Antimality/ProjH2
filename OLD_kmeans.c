@@ -1,15 +1,15 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "kmeansmodule.h"
 #define EPSILON 0.001
-#define DEFAULT_ITER 400
 #ifndef INFINITY
 #define INFINITY 1e100
 #endif
 
 /*
 struct definitions
-*/
+
 
 struct cord {
     double value;
@@ -32,9 +32,9 @@ typedef struct vector vector;
 typedef struct centroid centroid;
 typedef char bool;
 
-/* Function prototypes */
+/* Function prototypes
 
-/* Utility functions */
+/* Utility functions
 void free_cords(cord *head);
 void free_vectors(vector *vec);
 void free_centroids(centroid *centroid_list);
@@ -45,7 +45,7 @@ double euclidean_distance(vector *vec, centroid *cen);
 short update_centroids(centroid *centroid_list);
 bool add_vector_to_centroid(centroid *centroid_list, int i, vector *new_vector);
 
-/* Main operation functions */
+/* Main operation functions
 bool read_arguments(int argc, char **argv, int *k, int *max_iter);
 vector *read_input(int k, int max_iter);
 centroid *initialize_centroids(int k, vector *head_vec);
@@ -145,7 +145,7 @@ double euclidean_distance(vector *vec, centroid *cen) {
     }
     return sqrt(dist);
 }
-
+/*
 centroid *create_centroid(vector *center_input) {
     centroid *new_cent;
     new_cent = (centroid *)malloc(sizeof(centroid));
@@ -157,7 +157,7 @@ centroid *create_centroid(vector *center_input) {
     new_cent->next = NULL;
     new_cent->vectors = NULL;
 
-    /* Deep copy of the center vector */
+    /* Deep copy of the center vector
     new_cent->center.next = NULL;
     new_cent->center.cords = copy_cords(center_input->cords);
     if (new_cent->center.cords == NULL) {
@@ -167,7 +167,7 @@ centroid *create_centroid(vector *center_input) {
 
     return new_cent;
 }
-
+*/
 short update_centroids(centroid *centroid_list) {
     bool flag;
     vector *vec, *avg_vec;
@@ -297,7 +297,7 @@ bool add_vector_to_centroid(centroid *centroid_list, int i, vector *new_vector) 
 /*
 Main operation function declarations
 */
-
+/*
 bool read_arguments(int argc, char **argv, int *k, int *max_iter) {
     if (argc == 3) {
         *k = atoi(argv[1]);
@@ -386,7 +386,7 @@ vector *read_input(int k, int max_iter) {
     }
     return head_vec;
 }
-
+*/
 centroid *initialize_centroids(int k, vector *head_vec) {
     centroid *head_cent, *curr_cent, *next_cent;
     vector *curr_vec;
@@ -461,11 +461,11 @@ bool assign_clusters(int max_iter, vector *head_vec, centroid *head_cent) {
     }
     return 0;
 }
-
+/*
 void print_results(centroid *centroid_list) {
     cord *c;
     while (centroid_list != NULL) {
-        /* Print center cords */
+        /* Print center cords
         c = centroid_list->center.cords;
         while (c != NULL) {
             printf("%.4f", c->value);
@@ -508,8 +508,9 @@ int main(int argc, char **argv) {
 
     print_results(centroids);
 
-    /* Free memory */
+    /* Free memory
     free_all(vectors, centroids);
 
     return 0;
 }
+*/
