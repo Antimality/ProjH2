@@ -1,9 +1,6 @@
-//
-// Created by USER on 7/3/2025.
-//
-
 #ifndef KMEANSMODULE_H
 #define KMEANSMODULE_H
+
 /*
 struct definitions
 */
@@ -48,5 +45,4 @@ vector *initialize_vectors(int k, int max_iter);
 centroid *initialize_centroids(int k, vector *head_vec);
 bool assign_clusters(int max_iter, vector *head_vec, centroid *head_cent);
 
-
-#endif //KMEANSMODULE_H
+#endif // KMEANSMODULE_H
