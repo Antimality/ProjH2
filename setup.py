@@ -1,6 +1,6 @@
 from setuptools import Extension, setup
 
-module = Extension("mykmeanspp", sources=["kmeansmodule.c"])
+module = Extension("mykmeanspp", sources=["kmeansmodule.c", "kmeans.c"])
 setup(
     name="mykmeanspp",
     version="1.0",
