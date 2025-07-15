@@ -71,13 +71,16 @@ static PyObject *fit(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    // TODO: Add error handling to the following
     // Translate points and centroids to C
     vector *head_vec = build_vectors(PyPoints, dim, n);
     vector *centroid_vec = build_vectors(PyCentroids, dim, k);
+    if (!head_vec || !centroid_vec)
+        return NULL;
     // Translate vector list to centroid list
     centroid *head_cen = initialize_centroids(k, centroid_vec);
     free_vectors(centroid_vec);
+    if (!head_cen)
+        return NULL;
 
     // Kmeans loop
     if (assign_clusters(max_iter, head_vec, head_cen, eps) != 0) {
@@ -87,9 +90,8 @@ static PyObject *fit(PyObject *self, PyObject *args) {
 
     // Generate return (python) list
     PyObject *cent, *centroids = PyList_New(k);
-    if (!centroids) {
+    if (!centroids)
         return NULL;
-    }
     centroid *curr_cen = head_cen;
     cord *curr_cord;
     for (int i = 0; i < k; i++) {
