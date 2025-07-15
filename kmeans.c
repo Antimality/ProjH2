@@ -1,60 +1,10 @@
+#include "kmeansmodule.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "kmeansmodule.h"
-#define EPSILON 0.001
 #ifndef INFINITY
 #define INFINITY 1e100
 #endif
-
-/*
-struct definitions
-
-
-struct cord {
-    double value;
-    struct cord *next;
-};
-
-struct vector {
-    struct cord *cords;
-    struct vector *next;
-};
-
-struct centroid {
-    struct vector center;
-    struct vector *vectors;
-    struct centroid *next;
-};
-
-typedef struct cord cord;
-typedef struct vector vector;
-typedef struct centroid centroid;
-typedef char bool;
-
-/* Function prototypes
-
-/* Utility functions
-void free_cords(cord *head);
-void free_vectors(vector *vec);
-void free_centroids(centroid *centroid_list);
-void free_all(vector *head_vec, centroid *head_cent);
-cord *copy_cords(cord *original);
-centroid *create_centroid(vector *center_input);
-double euclidean_distance(vector *vec, centroid *cen);
-short update_centroids(centroid *centroid_list);
-bool add_vector_to_centroid(centroid *centroid_list, int i, vector *new_vector);
-
-/* Main operation functions
-bool read_arguments(int argc, char **argv, int *k, int *max_iter);
-vector *read_input(int k, int max_iter);
-centroid *initialize_centroids(int k, vector *head_vec);
-bool assign_clusters(int max_iter, vector *head_vec, centroid *head_cent);
-void print_results(centroid *centroid_list);
-
-/*
-Utility function declarations
-*/
 
 void free_cords(cord *head) {
     cord *temp;
@@ -78,13 +28,13 @@ void free_vectors(vector *vec) {
 void free_centroids(centroid *centroid_list) {
     centroid *temp;
     while (centroid_list != NULL) {
-        /* Free cords of center vector */
+        // Free cords of center vector
         free_cords(centroid_list->center.cords);
 
-        /* Free attached vectors (if any) */
+        // Free attached vectors (if any)
         free_vectors(centroid_list->vectors);
 
-        /* Free centroid struct */
+        // Free centroid struct
         temp = centroid_list;
         centroid_list = centroid_list->next;
         free(temp);
@@ -145,7 +95,7 @@ double euclidean_distance(vector *vec, centroid *cen) {
     }
     return sqrt(dist);
 }
-/*
+
 centroid *create_centroid(vector *center_input) {
     centroid *new_cent;
     new_cent = (centroid *)malloc(sizeof(centroid));
@@ -157,7 +107,7 @@ centroid *create_centroid(vector *center_input) {
     new_cent->next = NULL;
     new_cent->vectors = NULL;
 
-    /* Deep copy of the center vector
+    // Deep copy of the center vector
     new_cent->center.next = NULL;
     new_cent->center.cords = copy_cords(center_input->cords);
     if (new_cent->center.cords == NULL) {
@@ -167,8 +117,8 @@ centroid *create_centroid(vector *center_input) {
 
     return new_cent;
 }
-*/
-short update_centroids(centroid *centroid_list) {
+
+short update_centroids(centroid *centroid_list, double eps) {
     bool flag;
     vector *vec, *avg_vec;
     cord *first_cord, *c, *s, *avg_cords, *sum_tail, *new_cord;
@@ -179,16 +129,16 @@ short update_centroids(centroid *centroid_list) {
         vec = centroid_list->vectors;
         if (vec == NULL) {
             centroid_list = centroid_list->next;
-            continue; /* Skip if no vectors */
+            continue; // Skip if no vectors
         }
 
-        /* Get dimension from the first vector */
+        // Get dimension from the first vector
         first_cord = vec->cords;
         dimension = 0;
         for (c = first_cord; c != NULL; c = c->next)
             dimension++;
 
-        /* Initialize avg_cords as a linked list of zeros */
+        // Initialize avg_cords as a linked list of zeros
         avg_cords = NULL, sum_tail = NULL;
         for (i = 0; i < dimension; i++) {
             new_cord = (cord *)malloc(sizeof(cord));
@@ -207,7 +157,7 @@ short update_centroids(centroid *centroid_list) {
         }
 
         count = 0;
-        /* Sum values across all vectors */
+        // Sum values across all vectors
         while (vec != NULL) {
             c = vec->cords;
             s = avg_cords;
@@ -220,14 +170,14 @@ short update_centroids(centroid *centroid_list) {
             vec = vec->next;
         }
 
-        /* Compute average */
+        // Compute average
         s = avg_cords;
         while (s != NULL) {
             s->value /= count;
             s = s->next;
         }
 
-        /* Compare with old center cords to check for convergence */
+        // Compare with old center cords to check for convergence
         avg_vec = (vector *)malloc(sizeof(vector));
         if (avg_vec == NULL) {
             printf("Error Has Occurred\n");
@@ -236,18 +186,18 @@ short update_centroids(centroid *centroid_list) {
         }
 
         avg_vec->cords = avg_cords;
-        if (euclidean_distance(avg_vec, centroid_list) >= EPSILON)
+        if (euclidean_distance(avg_vec, centroid_list) >= eps)
             flag = 1;
 
         free(avg_vec);
 
-        /* Free old center cords if any */
+        // Free old center cords if any
         free_cords(centroid_list->center.cords);
 
-        /* Assign new cords as center */
+        // Assign new cords as center
         centroid_list->center.cords = avg_cords;
 
-        /* Free the vector list and reset to NULL */
+        // Free the vector list and reset to NULL
         free_vectors(centroid_list->vectors);
         centroid_list->vectors = NULL;
 
@@ -261,19 +211,19 @@ bool add_vector_to_centroid(centroid *centroid_list, int i, vector *new_vector) 
     vector *copy;
     int j;
 
-    /* Traverse to the i-th centroid */
+    // Traverse to the i-th centroid
     curr = centroid_list;
     for (j = 0; j < i && curr != NULL; j++) {
         curr = curr->next;
     }
 
-    /* If i is out of bounds */
+    // If i is out of bounds
     if (curr == NULL) {
         printf("Error Has Occurred\n");
         return 1;
     }
 
-    /* Create a deep copy of the vector */
+    // Create a deep copy of the vector
     copy = (vector *)malloc(sizeof(vector));
     if (copy == NULL) {
         printf("Error Has Occurred\n");
@@ -287,106 +237,13 @@ bool add_vector_to_centroid(centroid *centroid_list, int i, vector *new_vector) 
         return 1;
     }
 
-    /* Add the new vector to the front of the centroid's vector list */
+    // Add the new vector to the front of the centroid's vector list
     copy->next = curr->vectors;
     curr->vectors = copy;
 
     return 0;
 }
 
-/*
-Main operation function declarations
-*/
-/*
-bool read_arguments(int argc, char **argv, int *k, int *max_iter) {
-    if (argc == 3) {
-        *k = atoi(argv[1]);
-        *max_iter = atoi(argv[2]);
-    }
-    if (argc == 2) {
-        *k = atoi(argv[1]);
-        *max_iter = DEFAULT_ITER;
-    }
-    if (argc > 3 || argc < 2) {
-        printf("Error Has Occurred\n");
-        return 1;
-    }
-    return 0;
-}
-
-vector *read_input(int k, int max_iter) {
-
-    vector *head_vec, *curr_vec;
-    cord *head_cord, *curr_cord;
-    int rows;
-    double n;
-    char c;
-
-    head_cord = (cord *)malloc(sizeof(cord));
-    curr_cord = head_cord;
-    curr_cord->next = NULL;
-
-    head_vec = (vector *)malloc(sizeof(vector));
-    curr_vec = head_vec;
-    curr_vec->next = NULL;
-
-    if (head_cord == NULL || head_vec == NULL) {
-        printf("Error Has Occurred\n");
-        free(curr_cord);
-        free(curr_vec);
-        return NULL;
-    }
-
-    rows = 0;
-    while (scanf("%lf%c", &n, &c) == 2) {
-
-        if (c == '\n') {
-            curr_cord->value = n;
-            curr_vec->cords = head_cord;
-            curr_vec->next = (vector *)malloc(sizeof(vector));
-            curr_vec = curr_vec->next;
-            curr_vec->cords = NULL;
-            curr_vec->next = NULL;
-            head_cord = (cord *)malloc(sizeof(cord));
-            curr_cord = head_cord;
-            curr_cord->next = NULL;
-            rows++;
-
-            if (curr_cord == NULL || curr_vec == NULL) {
-                printf("Error Has Occurred\n");
-                free_vectors(head_vec);
-                free_cords(head_cord);
-                return NULL;
-            }
-
-            continue;
-        }
-
-        curr_cord->value = n;
-        curr_cord->next = (cord *)malloc(sizeof(cord));
-        curr_cord = curr_cord->next;
-        if (curr_cord == NULL) {
-            printf("Error Has Occurred\n");
-            free_vectors(head_vec);
-            return NULL;
-        }
-        curr_cord->next = NULL;
-    }
-    free_cords(head_cord);
-
-    if (1 >= k || k >= rows) {
-        printf("Incorrect number of clusters!\n");
-        free_vectors(head_vec);
-        return NULL;
-    }
-    if (max_iter <= 1 || max_iter >= 1000) {
-        printf("Incorrect maximum iteration!\n");
-        free_vectors(head_vec);
-        return NULL;
-    }
-    return head_vec;
-}
-*/
 centroid *initialize_centroids(int k, vector *head_vec) {
     centroid *head_cent, *curr_cent, *next_cent;
     vector *curr_vec;
@@ -415,7 +272,7 @@ centroid *initialize_centroids(int k, vector *head_vec) {
     return head_cent;
 }
 
-bool assign_clusters(int max_iter, vector *head_vec, centroid *head_cent) {
+bool assign_clusters(int max_iter, vector *head_vec, centroid *head_cent, double eps) {
     centroid *curr_cent;
     vector *curr_vec;
     bool flag, exit;
@@ -453,7 +310,7 @@ bool assign_clusters(int max_iter, vector *head_vec, centroid *head_cent) {
             curr_vec = curr_vec->next;
         }
         iter++;
-        flag = update_centroids(head_cent);
+        flag = update_centroids(head_cent, eps);
         if (flag == -1) {
             printf("Error Has Occurred\n");
             return 1;
@@ -461,56 +318,3 @@ bool assign_clusters(int max_iter, vector *head_vec, centroid *head_cent) {
     }
     return 0;
 }
-/*
-void print_results(centroid *centroid_list) {
-    cord *c;
-    while (centroid_list != NULL) {
-        /* Print center cords
-        c = centroid_list->center.cords;
-        while (c != NULL) {
-            printf("%.4f", c->value);
-            if (c->next != NULL) {
-                printf(",");
-            }
-            c = c->next;
-        }
-        printf("\n");
-
-        centroid_list = centroid_list->next;
-    }
-}
-
-int main(int argc, char **argv) {
-    bool exit;
-    int k, max_iter;
-    vector *vectors;
-    centroid *centroids;
-
-    exit = read_arguments(argc, argv, &k, &max_iter);
-    if (exit)
-        return 1;
-
-    vectors = read_input(k, max_iter);
-    if (vectors == NULL)
-        return 1;
-
-    centroids = initialize_centroids(k, vectors);
-    if (centroids == NULL) {
-        free_vectors(vectors);
-        return 1;
-    }
-
-    exit = assign_clusters(max_iter, vectors, centroids);
-    if (exit) {
-        free_all(vectors, centroids);
-        return 1;
-    }
-
-    print_results(centroids);
-
-    /* Free memory
-    free_all(vectors, centroids);
-
-    return 0;
-}
-*/

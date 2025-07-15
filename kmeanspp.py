@@ -1,6 +1,7 @@
 import sys
 import csv
 import numpy as np
+import mykmeanspp as km
 
 # Consts
 DEFAULT_ITER = 300
@@ -14,22 +15,26 @@ def read_input(args: list) -> (dict[int, list[float]], int, int, float):
     offset = 0 if n == 5 else -1
 
     # Read K
-    # TODO: Does something like k=42.0 fine?
-    if not str.isdecimal(args[0]):
+    try:
+        kf = float(args[0])
+        if kf != int(kf):
+            raise ValueError
+    except ValueError:
         print("Invalid number of clusters!")
         exit(1)
-    k = int(args[0])
-
+    k = int(kf)
+    
     # Read iter if present
     max_iter = DEFAULT_ITER
     if n == 5:
-        if not str.isdecimal(args[1]):
+        try:
+            mif = float(args[1])
+            if mif != int(mif) or mif <= 1 or mif >= 1000:
+                raise ValueError
+        except ValueError:
             print("Invalid maximum iteration!")
             exit(1)
-        max_iter = int(args[1])
-        if not (max_iter > 1 and max_iter < 1000):
-            print("Invalid maximum iteration!")
-            exit(1)
+        max_iter = int(mif)
 
     # Read eps
     try:
@@ -111,47 +116,13 @@ def get_keys(points_dict: dict[int, list[tuple]], points: list[tuple]) -> list[i
 def kmeans(
     points: list[tuple], init_centroids: list[tuple], k: int, max_iter: int, eps: float
 ) -> list[tuple]:
-    # TODO: Implement kmeans with C
-    return generate_clusters(points, init_centroids, k, max_iter, eps)
-
-
-### SHOULD BE REMOVED
-def generate_clusters(
-    points: list[tuple], init_centroids: list[tuple], k: int, max_iter: int, eps: float
-) -> list[tuple]:
-    """
-    defines a double list, each sub list represent a cluster
-    in each sub list the first value is the center of the cluster
-    and the following values are indexes of Xi in the cluster
-    """
-    centroids = init_centroids
-    iter = 0
-    flag = True
-    # flag represents if a cluster center had been updated by a value more distanced the epsilon
-    while (iter < max_iter) and flag:
-        flag = False
-        clusters_indexes = [[] for i in range(k)]
-        for i in range(len(points)):
-            min_index = -1
-            min_value = float("inf")
-            for j in range(k):
-                # tries to add Xi to a cluster and search for a new minimum for it
-                dist = euclidean_distance(points[i], centroids[j])
-                if dist < min_value:
-                    min_index = j
-                    min_value = dist
-            clusters_indexes[min_index].append(i)
-        for j in range(k):
-            # Ignore empty clusters
-            if len(clusters_indexes[j]) == 0:
-                continue
-            new_center = average_point(points, clusters_indexes[j])
-            if euclidean_distance(new_center, centroids[j]) >= eps:
-                flag = True
-            centroids[j] = new_center
-        iter += 1
+    n = len(points)
+    dim = len(points[0])
+    centroids = km.fit(points, init_centroids, k, max_iter, dim, n, eps)
+    if centroids == None:
+        print("An Error Has Occurred")
+        exit(1)
     return centroids
-
 
 def average_point(lst: list[tuple], sub_lst: list[tuple]) -> tuple[float]:
     dim = len(lst[0])

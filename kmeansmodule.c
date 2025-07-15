@@ -2,11 +2,11 @@
 #include "kmeansmodule.h"
 #include <Python.h>
 
-vector *build_vectors(PyObject *PyVectors, int dim, int n) {
+vector *build_vectors(PyObject *PyPoints, int dim, int n) {
 
     vector *head_vec, *curr_vec;
     cord *head_cord, *curr_cord;
-    PyObject *item;
+    PyObject *p, *c;
     int i = 0;
     double x;
     head_cord = (cord *)malloc(sizeof(cord));
@@ -24,10 +24,10 @@ vector *build_vectors(PyObject *PyVectors, int dim, int n) {
         return NULL;
     }
     for (i = 0; i < n; i++) {
-
+        p = PyList_GetItem(PyPoints, i);
         for (int j = 0; j < (dim - 1); j++) {
-            PyObject *item = PyList_GetItem(PyVectors, (i * dim) + j);
-            x = PyFloat_AsDouble(item);
+            c = PyTuple_GetItem(p, j);
+            x = PyFloat_AsDouble(c);
             curr_cord->value = x;
             curr_cord->next = (cord *)malloc(sizeof(cord));
             curr_cord = curr_cord->next;
@@ -37,8 +37,8 @@ vector *build_vectors(PyObject *PyVectors, int dim, int n) {
                 return NULL;
             }
         }
-        PyObject *item = PyList_GetItem(PyVectors, (i + 1) * dim - 1);
-        x = PyFloat_AsDouble(item);
+        c = PyTuple_GetItem(p, dim - 1);
+        x = PyFloat_AsDouble(c);
         curr_cord->next = NULL;
         curr_cord->value = x;
         curr_vec->cords = head_cord;
@@ -62,47 +62,58 @@ vector *build_vectors(PyObject *PyVectors, int dim, int n) {
 }
 
 static PyObject *fit(PyObject *self, PyObject *args) {
-    PyObject *PyVectors;
+    PyObject *PyPoints;
     PyObject *PyCentroids;
     int k, max_iter, dim, n;
-    if (!PyArg_ParseTuple(args, "OOiiii", &PyVectors, &PyCentroids, &k, &max_iter, &dim, &n))
+    double eps;
+
+    if (!PyArg_ParseTuple(args, "OOiiiid", &PyPoints, &PyCentroids, &k, &max_iter, &dim, &n, &eps)) {
         return NULL;
-    vector *head_vec = build_vectors(PyVectors, dim, n);
+    }
+
+    // TODO: Add error handling to the following
+    // Translate points and centroids to C
+    vector *head_vec = build_vectors(PyPoints, dim, n);
     vector *centroid_vec = build_vectors(PyCentroids, dim, k);
+    // Translate vector list to centroid list
     centroid *head_cen = initialize_centroids(k, centroid_vec);
     free_vectors(centroid_vec);
-    if (assign_clusters(max_iter, head_vec, head_cen) != 0) {
+
+    // Kmeans loop
+    if (assign_clusters(max_iter, head_vec, head_cen, eps) != 0) {
         free_all(head_vec, head_cen);
-    } else {
-        Py_ssize_t total = (Py_ssize_t)k * dim;
-        PyObject *result = PyList_New(total);
-        if (!result) {
-            return NULL;
-        }
-        centroid *curr_cen = head_cen;
-        cord *curr_cord;
-        Py_ssize_t ind = 0;
-        for (int i = 0; i < k; i++) {
-            curr_cord = curr_cen->center.cords;
-            for (int j = 0; j < dim; j++) {
-                double x = curr_cord->value;
-                PyList_SetItem(result, ind, PyFloat_FromDouble(x));
-                ind++;
-                curr_cord = curr_cord->next;
-            }
-            curr_cen = curr_cen->next;
-        }
-        free_all(head_vec, head_cen);
-        return result;
+        return NULL;
     }
-    return NULL;
+
+    // Generate return (python) list
+    PyObject *cent, *centroids = PyList_New(k);
+    if (!centroids) {
+        return NULL;
+    }
+    centroid *curr_cen = head_cen;
+    cord *curr_cord;
+    for (int i = 0; i < k; i++) {
+        curr_cord = curr_cen->center.cords;
+        cent = PyTuple_New(dim);
+        for (int j = 0; j < dim; j++) {
+            double x = curr_cord->value;
+            PyTuple_SetItem(cent, j, PyFloat_FromDouble(x));
+            curr_cord = curr_cord->next;
+        }
+        curr_cen = curr_cen->next;
+        PyList_SetItem(centroids, i, cent);
+    }
+    free_all(head_vec, head_cen);
+    return centroids;
 }
 
 static PyMethodDef ModuleMethods[] = {
     {"fit",
      (PyCFunction)fit,
      METH_VARARGS,
-     "Run k-means clustering and return the final centroids. expects a list of vectors and a list of centroids. then: k, max_iter, dim, n. returns a list of centroids."},
+     PyDoc_STR("Run k-means clustering and return the final centroids. "
+               "expects a list of points and a list of centroids. "
+               "then: k, max_iter, dim, n. returns a list of centroids.")},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef mymodule = {
@@ -112,7 +123,7 @@ static struct PyModuleDef mymodule = {
     -1,
     ModuleMethods};
 
-PyMODINIT_FUNC PyInit_myext(void) {
+PyMODINIT_FUNC PyInit_mykmeanspp(void) {
     PyObject *m = PyModule_Create(&mymodule);
     return !m ? NULL : m;
 }

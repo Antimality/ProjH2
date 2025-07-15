@@ -36,13 +36,13 @@ void free_all(vector *head_vec, centroid *head_cent);
 cord *copy_cords(cord *original);
 centroid *create_centroid(vector *center_input);
 double euclidean_distance(vector *vec, centroid *cen);
-short update_centroids(centroid *centroid_list);
+short update_centroids(centroid *centroid_list, double eps);
 bool add_vector_to_centroid(centroid *centroid_list, int i, vector *new_vector);
 
 /* Main operation functions */
 
 vector *initialize_vectors(int k, int max_iter);
 centroid *initialize_centroids(int k, vector *head_vec);
-bool assign_clusters(int max_iter, vector *head_vec, centroid *head_cent);
+bool assign_clusters(int max_iter, vector *head_vec, centroid *head_cent, double eps);
 
 #endif // KMEANSMODULE_H

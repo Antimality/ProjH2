@@ -411,7 +411,10 @@ def fit_adapter(
 
     Edit this function to make sure the tests work with your code
     """
-    result = fit(datapoints, np.ascontiguousarray(initial_centroids), eps, max_iter)
+    k = len(initial_centroids)
+    n = len(datapoints)
+    dim = len(datapoints[0])
+    result = fit(datapoints, np.ascontiguousarray(initial_centroids), k, max_iter, dim, n, eps)
     return np.asarray(result)
 
 
